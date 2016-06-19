@@ -2,7 +2,6 @@
 
 /* TODO(zaklaus):
 Minifier still has some flaws and leaves a few whitespaces in the code.
-It also does not support comments, but leaves them in the code aswell.
 Code requires refactoring.
 */
 
@@ -12,6 +11,7 @@ enum STATES
 {
     WRITE,
     IGNORE,
+    COMMENT,
     NUM_OF_STATES
 };
 
@@ -59,6 +59,7 @@ extern "C" MINIFY_FILE(MinifyFile)
     char * output = (char *) api->AllocMem(sizeof(char) * (strlen(api->FileContent) + 1));
     
     int state = WRITE;
+    int old_state = state;
     char * b = output;
     char * ptr = api->FileContent;
     
@@ -71,15 +72,18 @@ extern "C" MINIFY_FILE(MinifyFile)
             case '{':
             {
                 // NOTE(zaklaus): ???
-                
-                state = IGNORE;
-                *(output++) = '{';
+                if(state != COMMENT){
+                    state = IGNORE;
+                    *(output++) = '{';
+                }
             }break;
             
             case '}':
             {
-                state = WRITE;
-                *(output++) = '}';
+                if(state != COMMENT){
+                    state = WRITE;
+                    *(output++) = '}';
+                }
             }break;
             
             case '\n': case '\r':
@@ -87,40 +91,68 @@ extern "C" MINIFY_FILE(MinifyFile)
                 continue;
             }break;
             
+            case '/':
+            {
+                if(*(ptr) == '*')
+                {
+                    old_state = state;
+                    state = COMMENT;
+                }
+            }break;
+            
+            case '*':
+            {
+                if(*(ptr) == '/')
+                {
+                    state = old_state;
+                }
+            }break;
+            
             case '.': case '#':
             {
-                state = WRITE;
-                *(output++) = c;
+                if(state != COMMENT){
+                    state = WRITE;
+                    *(output++) = c;
+                }
             }break;
             
             case ':':
             {
-                state = WRITE;
-                *(output++) = c;
+                if(state != COMMENT)
+                {
+                    state = WRITE;
+                    *(output++) = c;
                 
                 if (is_whitespace(*ptr))
                 {
                     ptr++;
                 }
+            }
             }break;
             
             case ';':
             {
-                state = IGNORE;
-                *(output++) = c;
+                if(state != COMMENT){
+                    state = IGNORE;
+                    *(output++) = c;
+                }
             }break;
             
             default:
             {
-                // TODO(zaklaus): Replace with IsCharWhitespace
-                if(state == WRITE && (c == ' ' || c == '\t' || c == '\n'))
+                if(state == COMMENT)
+                {
+                    continue;
+                }
+                
+                if(state == WRITE && is_whitespace(c))
                 {
                     if(lookup_char(ptr-1, '{'))
                     {
                         *(output++) = c;
                     }
                 }
-                else if(c != ' ' && c != '\t' && c != '\n')
+                else if(!is_whitespace(c))
                 {
                     *(output++) = c;
                 }
