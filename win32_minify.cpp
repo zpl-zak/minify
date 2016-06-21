@@ -250,6 +250,7 @@ main(int argc, char** argv)
     
     // NOTE(zaklaus): Here we can load plugins.
     win32_load_plugin(&app, "minify_css.dll");
+    win32_load_plugin(&app, "minify_js.dll");
     
     win32_get_files_in_directory(&app, argv[1]);
     
@@ -268,6 +269,7 @@ main(int argc, char** argv)
             {
                 char * output = win32_process_file(&app, app.FileNames[i],  It);
                 win32_output_file(&app, output, app.FileNames[i]);
+                break;
             }
         }
     }

@@ -15,6 +15,10 @@ echo Building Minify CSS...
 
 cl %CCF% ../minify_css.cpp -Fmminify.map -LD /link -incremental:no -opt:ref -PDB:minify_%random%.pdb -EXPORT:MinifyFile -EXPORT:GetExtension
 
+echo Building Minify JS...
+
+cl %CCF% ../minify_js.cpp -Fmminify.map -LD /link -incremental:no -opt:ref -PDB:minify_%random%.pdb -EXPORT:MinifyFile -EXPORT:GetExtension
+
 set LastError=%ERRORLEVEL%
 
 echo Building Minify...
@@ -26,3 +30,4 @@ popd
 ctime -end minify.ctm %LastError%
 
 xcopy /Y build\minify_css.dll data\minify_css.dll
+xcopy /Y build\minify_js.dll data\minify_js.dll
